@@ -31,8 +31,7 @@ if (isset($_GET['ajax']) ) {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <script src="http://code.jquery.com/jquery-1.8.2.min.js"></script>
-    <script src="http://creativecouple.github.com/jquery-timing/jquery-timing.min.js"></script>
+    <script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
     <script>
         /**
          * 是否重头载入
@@ -42,13 +41,13 @@ if (isset($_GET['ajax']) ) {
          * 设置sql语句运行时间警告阀值
          * @type {number}
          */
-        var alert_runtime=0.01;
+        var alert_runtime=0.1;
         $(function() {
             $("#filter").change(function(){
                 $("#tail").html("");
             });
             tail();
-            $.repeat(2000, tail);
+            setInterval("tail()", 2000);
         });
         function tail(){
             var url = 'tail.php?ajax=1';
@@ -67,23 +66,24 @@ if (isset($_GET['ajax']) ) {
         //filter key word
         function filter(str){
             var filter = $("#filter").val();
-            if(filter==="") return str;
+           if(filter==="") return str;
             var lines = str.split("\n"),reg = new  RegExp(filter+":");
             var reg_runtime = /\[\sRunTime:([\.0-9]+)s\s\]/;
+            var reg_from = /^\[\s\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+\d{2}:\d{2}\s\]/;
             _str="";
             for(var x in lines) {
                 var line = lines[x];
-                if (reg.test(line)) {
-                    if (filter == "SQL" && reg_runtime.test(line)) {
-                        var g = line.match(reg_runtime);
-                        if (g[1] > alert_runtime)
-                            line = line.replace(reg_runtime, "<span class='ERR'>" + g[0] + "</span>");
-                    }
-                    _str += line;
+                if (filter && !reg.test(line) && !reg_from.test(line)) {
+                    continue;
                 }
+                if (reg_runtime.test(line)) {
+                    var g = line.match(reg_runtime);
+                    if (g[1] > alert_runtime)
+                        line = line.replace(reg_runtime, "<span class='ERR'>" + g[0] + "</span>");
+                }
+                _str += line;
             }
-
-                return _str;
+            return _str;
         }
 
         //process unicode
@@ -159,8 +159,8 @@ filter:
     <option value="WARN">WARN</option>
     <option value="INFO">INFO</option>
     <option value="SQL">SQL</option>
-</select>  <button onclick="$('#tail').html('');window.is_reset=1">reset</button>
-Starting up...
+</select>  <button onclick="$('#tail').html('');window.is_reset=1">载入全部</button>
+Starting up...Refresh to show newest log.
 <div id="tail"></div>
 </body>
 </html>
